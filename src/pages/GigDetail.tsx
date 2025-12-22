@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit, Trash2 } from 'lucide-react';
+import { Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { GigInfoCard } from '@/components/gigs/GigInfoCard';
@@ -7,6 +8,7 @@ import { MemberAvailabilityCard } from '@/components/gigs/MemberAvailabilityCard
 import { GigExpensesCard } from '@/components/gigs/GigExpensesCard';
 import { GigPaymentsCard } from '@/components/gigs/GigPaymentsCard';
 import { GigPayoutsCard } from '@/components/gigs/GigPayoutsCard';
+import { EditGigDialog } from '@/components/gigs/EditGigDialog';
 import { useGigs, useDeleteGig } from '@/hooks/useGigs';
 import { 
   useGigAvailability, 
@@ -20,6 +22,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 export default function GigDetail() {
   const { gigId } = useParams<{ gigId: string }>();
   const navigate = useNavigate();
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   
   const { data: gigs, isLoading: gigsLoading } = useGigs();
   const { data: availability = [], isLoading: availabilityLoading } = useGigAvailability(gigId || '');
@@ -68,6 +71,14 @@ export default function GigDetail() {
       title={gig.title}
       action={
         <div className="flex items-center gap-2">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => setEditDialogOpen(true)}
+            className="text-primary hover:bg-primary/20"
+          >
+            <Edit className="w-5 h-5" />
+          </Button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/20">
@@ -95,7 +106,7 @@ export default function GigDetail() {
         </div>
       }
     >
-      <div className="space-y-6 pb-24">
+      <div className="px-4 space-y-6 pb-24">
         {/* Gig Info */}
         <GigInfoCard gig={gig} />
 
@@ -131,6 +142,8 @@ export default function GigDetail() {
           isLoading={payoutsLoading || financialsLoading}
         />
       </div>
+
+      <EditGigDialog open={editDialogOpen} onOpenChange={setEditDialogOpen} gig={gig} />
     </AppLayout>
   );
 }
