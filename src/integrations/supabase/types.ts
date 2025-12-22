@@ -99,6 +99,51 @@ export type Database = {
           },
         ]
       }
+      gig_setlists: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          gig_id: string
+          id: string
+          notes: string | null
+          position: number
+          song_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          gig_id: string
+          id?: string
+          notes?: string | null
+          position?: number
+          song_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          gig_id?: string
+          id?: string
+          notes?: string | null
+          position?: number
+          song_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gig_setlists_gig_id_fkey"
+            columns: ["gig_id"]
+            isOneToOne: false
+            referencedRelation: "gigs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gig_setlists_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: false
+            referencedRelation: "songs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gigs: {
         Row: {
           address: string | null

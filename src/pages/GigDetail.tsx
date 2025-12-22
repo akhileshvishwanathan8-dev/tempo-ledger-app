@@ -8,6 +8,7 @@ import { MemberAvailabilityCard } from '@/components/gigs/MemberAvailabilityCard
 import { GigExpensesCard } from '@/components/gigs/GigExpensesCard';
 import { GigPaymentsCard } from '@/components/gigs/GigPaymentsCard';
 import { GigPayoutsCard } from '@/components/gigs/GigPayoutsCard';
+import { GigSetlistCard } from '@/components/gigs/GigSetlistCard';
 import { EditGigDialog } from '@/components/gigs/EditGigDialog';
 import { useGigs, useDeleteGig } from '@/hooks/useGigs';
 import { 
@@ -109,6 +110,9 @@ export default function GigDetail() {
       <div className="px-4 space-y-6 pb-24">
         {/* Gig Info */}
         <GigInfoCard gig={gig} />
+
+        {/* Setlist */}
+        <GigSetlistCard gigId={gigId || ''} />
 
         {/* Member Availability */}
         <MemberAvailabilityCard

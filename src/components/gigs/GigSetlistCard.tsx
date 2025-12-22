@@ -1,0 +1,262 @@
+import { useState } from 'react';
+import { Music, Plus, Trash2, GripVertical, Clock, ChevronDown, ChevronUp } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useGigSetlist, useAddToSetlist, useRemoveFromSetlist, useUpdateSetlistOrder, SetlistItem } from '@/hooks/useGigSetlist';
+import { useSongs } from '@/hooks/useSongs';
+import { cn } from '@/lib/utils';
+
+interface GigSetlistCardProps {
+  gigId: string;
+}
+
+export function GigSetlistCard({ gigId }: GigSetlistCardProps) {
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const { data: setlist = [], isLoading } = useGigSetlist(gigId);
+  const { data: allSongs = [], isLoading: songsLoading } = useSongs();
+  const addToSetlist = useAddToSetlist();
+  const removeFromSetlist = useRemoveFromSetlist();
+  const updateOrder = useUpdateSetlistOrder();
+
+  // Filter songs not already in setlist
+  const setlistSongIds = new Set(setlist.map(s => s.song_id));
+  const availableSongs = allSongs.filter(song => 
+    !setlistSongIds.has(song.id) &&
+    song.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const totalDuration = setlist.reduce((sum, item) => sum + (item.song?.duration_minutes || 0), 0);
+
+  const handleAddSong = async (songId: string) => {
+    await addToSetlist.mutateAsync({
+      gigId,
+      songId,
+      position: setlist.length,
+    });
+    setAddDialogOpen(false);
+    setSearchQuery('');
+  };
+
+  const handleRemoveSong = async (id: string) => {
+    await removeFromSetlist.mutateAsync({ id, gigId });
+  };
+
+  const handleMoveUp = async (index: number) => {
+    if (index === 0) return;
+    const newItems = [...setlist];
+    [newItems[index - 1], newItems[index]] = [newItems[index], newItems[index - 1]];
+    await updateOrder.mutateAsync({
+      gigId,
+      items: newItems.map((item, i) => ({ id: item.id, position: i })),
+    });
+  };
+
+  const handleMoveDown = async (index: number) => {
+    if (index === setlist.length - 1) return;
+    const newItems = [...setlist];
+    [newItems[index], newItems[index + 1]] = [newItems[index + 1], newItems[index]];
+    await updateOrder.mutateAsync({
+      gigId,
+      items: newItems.map((item, i) => ({ id: item.id, position: i })),
+    });
+  };
+
+  return (
+    <Card className="glass-card border-border/50">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Music className="w-5 h-5 text-primary" />
+            <CardTitle className="text-lg">Setlist</CardTitle>
+            {setlist.length > 0 && (
+              <Badge variant="secondary" className="ml-2">
+                {setlist.length} songs
+              </Badge>
+            )}
+          </div>
+          <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm" variant="outline" className="gap-1">
+                <Plus className="w-4 h-4" />
+                Add Song
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="bg-card border-border max-w-md">
+              <DialogHeader>
+                <DialogTitle>Add Song to Setlist</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <Input
+                  placeholder="Search songs..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                <ScrollArea className="h-[300px]">
+                  {songsLoading ? (
+                    <div className="space-y-2">
+                      {[1, 2, 3].map(i => (
+                        <Skeleton key={i} className="h-14 w-full" />
+                      ))}
+                    </div>
+                  ) : availableSongs.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      {searchQuery ? 'No matching songs found' : 'All songs are already in the setlist'}
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {availableSongs.map(song => (
+                        <button
+                          key={song.id}
+                          onClick={() => handleAddSong(song.id)}
+                          disabled={addToSetlist.isPending}
+                          className="w-full p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors text-left flex items-center justify-between group"
+                        >
+                          <div>
+                            <p className="font-medium text-foreground">{song.title}</p>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+                              {song.composer && <span>{song.composer}</span>}
+                              {song.key_signature && (
+                                <>
+                                  <span>•</span>
+                                  <span>{song.key_signature}</span>
+                                </>
+                              )}
+                              {song.duration_minutes && (
+                                <>
+                                  <span>•</span>
+                                  <span>{song.duration_minutes} min</span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                          <Plus className="w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </ScrollArea>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </CardHeader>
+
+      <CardContent className="space-y-3">
+        {isLoading ? (
+          <div className="space-y-2">
+            {[1, 2, 3].map(i => (
+              <Skeleton key={i} className="h-16 w-full" />
+            ))}
+          </div>
+        ) : setlist.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            <Music className="w-8 h-8 mx-auto mb-2 opacity-50" />
+            <p>No songs in setlist</p>
+            <p className="text-xs mt-1">Add songs to plan your performance</p>
+          </div>
+        ) : (
+          <>
+            <div className="space-y-2">
+              {setlist.map((item, index) => (
+                <SetlistItemRow
+                  key={item.id}
+                  item={item}
+                  index={index}
+                  totalItems={setlist.length}
+                  onRemove={() => handleRemoveSong(item.id)}
+                  onMoveUp={() => handleMoveUp(index)}
+                  onMoveDown={() => handleMoveDown(index)}
+                  isReordering={updateOrder.isPending}
+                />
+              ))}
+            </div>
+
+            {/* Total duration */}
+            {totalDuration > 0 && (
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-border/50 text-sm text-muted-foreground">
+                <Clock className="w-4 h-4" />
+                <span>Total: ~{totalDuration} min</span>
+              </div>
+            )}
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+interface SetlistItemRowProps {
+  item: SetlistItem;
+  index: number;
+  totalItems: number;
+  onRemove: () => void;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+  isReordering: boolean;
+}
+
+function SetlistItemRow({ item, index, totalItems, onRemove, onMoveUp, onMoveDown, isReordering }: SetlistItemRowProps) {
+  return (
+    <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/30 border border-border/30 group">
+      <div className="flex flex-col gap-0.5">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-5 w-5"
+          onClick={onMoveUp}
+          disabled={index === 0 || isReordering}
+        >
+          <ChevronUp className="w-3 h-3" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-5 w-5"
+          onClick={onMoveDown}
+          disabled={index === totalItems - 1 || isReordering}
+        >
+          <ChevronDown className="w-3 h-3" />
+        </Button>
+      </div>
+
+      <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-xs font-medium text-primary shrink-0">
+        {index + 1}
+      </div>
+
+      <div className="flex-1 min-w-0">
+        <p className="font-medium text-foreground truncate">{item.song?.title}</p>
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          {item.song?.key_signature && (
+            <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+              {item.song.key_signature}
+            </Badge>
+          )}
+          {item.song?.raga && <span>{item.song.raga}</span>}
+          {item.song?.tempo && <span>{item.song.tempo} BPM</span>}
+          {item.song?.duration_minutes && (
+            <span className="flex items-center gap-0.5">
+              <Clock className="w-3 h-3" />
+              {item.song.duration_minutes}m
+            </span>
+          )}
+        </div>
+      </div>
+
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-8 w-8 text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+        onClick={onRemove}
+      >
+        <Trash2 className="w-4 h-4" />
+      </Button>
+    </div>
+  );
+}
