@@ -175,6 +175,54 @@ export function useCreateExpense() {
   });
 }
 
+export function useUpdateExpense() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, gigId, ...input }: Partial<GigExpense> & { id: string; gigId: string }) => {
+      const { data, error } = await supabase
+        .from('expenses')
+        .update(input)
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      return { data, gigId };
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['gig-expenses', result.gigId] });
+      queryClient.invalidateQueries({ queryKey: ['gig-financials'] });
+      toast.success('Expense updated');
+    },
+    onError: (error) => {
+      toast.error('Failed to update expense: ' + error.message);
+    },
+  });
+}
+
+export function useDeleteExpense() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, gigId }: { id: string; gigId: string }) => {
+      const { error } = await supabase
+        .from('expenses')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+      return { gigId };
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['gig-expenses', result.gigId] });
+      queryClient.invalidateQueries({ queryKey: ['gig-financials'] });
+      toast.success('Expense deleted');
+    },
+    onError: (error) => {
+      toast.error('Failed to delete expense: ' + error.message);
+    },
+  });
+}
+
 export function useGigPayments(gigId: string) {
   return useQuery({
     queryKey: ['gig-payments', gigId],
