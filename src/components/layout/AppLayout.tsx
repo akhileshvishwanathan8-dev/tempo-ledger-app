@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BottomNav } from "./BottomNav";
 import { UserMenu } from "./UserMenu";
+import { InstallPrompt } from "@/components/pwa/InstallPrompt";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -49,6 +50,7 @@ export function AppLayout({ children, title, showBackButton, action }: AppLayout
         {children}
       </main>
       <BottomNav />
+      <InstallPrompt />
     </div>
   );
 }
