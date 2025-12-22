@@ -12,6 +12,7 @@ import Finances from "./pages/Finances";
 import Songs from "./pages/Songs";
 import AI from "./pages/AI";
 import Auth from "./pages/Auth";
+import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -70,6 +71,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <AI />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <Admin />
                 </ProtectedRoute>
               }
             />
