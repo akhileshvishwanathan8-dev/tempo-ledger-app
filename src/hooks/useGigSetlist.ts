@@ -156,3 +156,47 @@ export function useUpdateSetlistNote() {
     },
   });
 }
+
+export function useCopySetlist() {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: async ({ sourceGigId, targetGigId }: { sourceGigId: string; targetGigId: string }) => {
+      // Fetch source setlist
+      const { data: sourceSetlist, error: fetchError } = await supabase
+        .from('gig_setlists')
+        .select('song_id, position, notes')
+        .eq('gig_id', sourceGigId)
+        .order('position', { ascending: true });
+
+      if (fetchError) throw fetchError;
+      if (!sourceSetlist || sourceSetlist.length === 0) {
+        throw new Error('Source gig has no setlist');
+      }
+
+      // Insert copies for target gig
+      const newItems = sourceSetlist.map(item => ({
+        gig_id: targetGigId,
+        song_id: item.song_id,
+        position: item.position,
+        notes: item.notes,
+        created_by: user?.id,
+      }));
+
+      const { error: insertError } = await supabase
+        .from('gig_setlists')
+        .insert(newItems);
+
+      if (insertError) throw insertError;
+      return { targetGigId };
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['gig-setlist', result.targetGigId] });
+      toast.success('Setlist copied successfully');
+    },
+    onError: (error: Error) => {
+      toast.error('Failed to copy setlist: ' + error.message);
+    },
+  });
+}
