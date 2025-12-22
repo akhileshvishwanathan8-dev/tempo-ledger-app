@@ -4,7 +4,6 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BottomNav } from "./BottomNav";
 import { UserMenu } from "./UserMenu";
-import musifiLogo from "@/assets/musifi-logo.png";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -29,7 +28,9 @@ export function AppLayout({ children, title, showBackButton, action }: AppLayout
             )}
             {!showBackButton ? (
               <Link to="/" className="flex items-center">
-                <img src={musifiLogo} alt="MusiFI" className="h-7" />
+                <span className="text-xl font-light tracking-wide text-foreground">
+                  Musi<span className="text-primary font-normal">FI</span>
+                </span>
               </Link>
             ) : (
               <h1 className="text-xl font-bold gradient-text-purple">
