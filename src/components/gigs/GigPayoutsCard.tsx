@@ -1,7 +1,12 @@
-import { Calculator, CheckCircle, Clock, Users } from 'lucide-react';
+import { useState } from 'react';
+import { format, parseISO } from 'date-fns';
+import { Calculator, CheckCircle, Clock, Users, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
-import { GigPayout, GigFinancials, useGeneratePayouts } from '@/hooks/useGigDetails';
+import { GigPayout, GigFinancials, useGeneratePayouts, useUpdatePayoutStatus } from '@/hooks/useGigDetails';
 
 interface GigPayoutsCardProps {
   gigId: string;
@@ -12,6 +17,9 @@ interface GigPayoutsCardProps {
 
 export function GigPayoutsCard({ gigId, payouts, financials, isLoading }: GigPayoutsCardProps) {
   const generatePayouts = useGeneratePayouts();
+  const updatePayoutStatus = useUpdatePayoutStatus();
+  const [selectedPayout, setSelectedPayout] = useState<GigPayout | null>(null);
+  const [paidDate, setPaidDate] = useState(new Date().toISOString().split('T')[0]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', { 
@@ -22,6 +30,25 @@ export function GigPayoutsCard({ gigId, payouts, financials, isLoading }: GigPay
   };
 
   const paidCount = payouts.filter(p => p.status === 'paid').length;
+
+  const handleMarkAsPaid = async () => {
+    if (!selectedPayout) return;
+    await updatePayoutStatus.mutateAsync({
+      payoutId: selectedPayout.id,
+      status: 'paid',
+      paidDate,
+      gigId
+    });
+    setSelectedPayout(null);
+  };
+
+  const handleMarkAsPending = async (payout: GigPayout) => {
+    await updatePayoutStatus.mutateAsync({
+      payoutId: payout.id,
+      status: 'pending',
+      gigId
+    });
+  };
 
   return (
     <div className="glass-card p-5 space-y-4">
@@ -90,10 +117,10 @@ export function GigPayoutsCard({ gigId, payouts, financials, isLoading }: GigPay
             <div
               key={payout.id}
               className={cn(
-                'flex items-center justify-between p-3 rounded-lg border',
+                'flex items-center justify-between p-3 rounded-lg border transition-all',
                 payout.status === 'paid' 
                   ? 'bg-green-500/10 border-green-500/30' 
-                  : 'bg-card/50 border-border/50'
+                  : 'bg-card/50 border-border/50 hover:bg-card/70'
               )}
             >
               <div className="flex items-center gap-3">
@@ -114,29 +141,100 @@ export function GigPayoutsCard({ gigId, payouts, financials, isLoading }: GigPay
                   </p>
                   <div className="flex items-center gap-1 mt-0.5">
                     {payout.status === 'paid' ? (
-                      <CheckCircle className="w-3 h-3 text-green-400" />
+                      <>
+                        <CheckCircle className="w-3 h-3 text-green-400" />
+                        <span className="text-xs text-green-400">
+                          Paid {payout.paid_date && format(parseISO(payout.paid_date), 'MMM d')}
+                        </span>
+                      </>
                     ) : (
-                      <Clock className="w-3 h-3 text-orange-400" />
+                      <>
+                        <Clock className="w-3 h-3 text-orange-400" />
+                        <span className="text-xs text-orange-400">Pending</span>
+                      </>
                     )}
-                    <span className={cn(
-                      'text-xs',
-                      payout.status === 'paid' ? 'text-green-400' : 'text-orange-400'
-                    )}>
-                      {payout.status === 'paid' ? 'Paid' : 'Pending'}
-                    </span>
                   </div>
                 </div>
               </div>
-              <span className={cn(
-                'text-sm font-semibold',
-                payout.status === 'paid' ? 'text-green-400' : 'text-foreground'
-              )}>
-                {formatCurrency(payout.amount)}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className={cn(
+                  'text-sm font-semibold',
+                  payout.status === 'paid' ? 'text-green-400' : 'text-foreground'
+                )}>
+                  {formatCurrency(payout.amount)}
+                </span>
+                {payout.status === 'pending' ? (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 px-2 text-xs bg-green-500/20 text-green-400 hover:bg-green-500/30"
+                    onClick={() => {
+                      setSelectedPayout(payout);
+                      setPaidDate(new Date().toISOString().split('T')[0]);
+                    }}
+                  >
+                    Mark Paid
+                  </Button>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                    onClick={() => handleMarkAsPending(payout)}
+                    disabled={updatePayoutStatus.isPending}
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                  </Button>
+                )}
+              </div>
             </div>
           ))
         )}
       </div>
+
+      {/* Mark as Paid Dialog */}
+      <Dialog open={!!selectedPayout} onOpenChange={(open) => !open && setSelectedPayout(null)}>
+        <DialogContent className="bg-card border-border">
+          <DialogHeader>
+            <DialogTitle>Mark Payout as Paid</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="p-3 rounded-lg bg-muted/50">
+              <p className="text-sm text-muted-foreground">Member</p>
+              <p className="font-medium text-foreground">
+                {selectedPayout?.profile?.full_name || 'Unknown Member'}
+              </p>
+            </div>
+            <div className="p-3 rounded-lg bg-muted/50">
+              <p className="text-sm text-muted-foreground">Amount</p>
+              <p className="text-lg font-semibold gradient-text-purple">
+                {selectedPayout && formatCurrency(selectedPayout.amount)}
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="paidDate">Payment Date</Label>
+              <Input
+                id="paidDate"
+                type="date"
+                value={paidDate}
+                onChange={(e) => setPaidDate(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setSelectedPayout(null)}>
+              Cancel
+            </Button>
+            <Button 
+              variant="neon" 
+              onClick={handleMarkAsPaid}
+              disabled={updatePayoutStatus.isPending}
+            >
+              {updatePayoutStatus.isPending ? 'Saving...' : 'Confirm Payment'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

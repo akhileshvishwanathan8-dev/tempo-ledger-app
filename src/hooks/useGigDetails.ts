@@ -278,3 +278,42 @@ export function useGeneratePayouts() {
     },
   });
 }
+
+export function useUpdatePayoutStatus() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ 
+      payoutId, 
+      status, 
+      paidDate,
+      gigId 
+    }: { 
+      payoutId: string; 
+      status: 'pending' | 'paid'; 
+      paidDate?: string;
+      gigId: string;
+    }) => {
+      const { data, error } = await supabase
+        .from('payouts')
+        .update({ 
+          status, 
+          paid_date: status === 'paid' ? (paidDate || new Date().toISOString().split('T')[0]) : null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', payoutId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { data, gigId };
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['gig-payouts', result.gigId] });
+      toast.success(result.data.status === 'paid' ? 'Marked as paid' : 'Marked as pending');
+    },
+    onError: (error) => {
+      toast.error('Failed to update payout: ' + error.message);
+    },
+  });
+}
