@@ -14,6 +14,251 @@ export type Database = {
   }
   public: {
     Tables: {
+      expenses: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          created_by: string | null
+          date: string
+          description: string
+          gig_id: string | null
+          id: string
+          paid_by: string | null
+          receipt_url: string | null
+        }
+        Insert: {
+          amount: number
+          category: string
+          created_at?: string
+          created_by?: string | null
+          date?: string
+          description: string
+          gig_id?: string | null
+          id?: string
+          paid_by?: string | null
+          receipt_url?: string | null
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          date?: string
+          description?: string
+          gig_id?: string | null
+          id?: string
+          paid_by?: string | null
+          receipt_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expenses_gig_id_fkey"
+            columns: ["gig_id"]
+            isOneToOne: false
+            referencedRelation: "gigs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gig_availability: {
+        Row: {
+          created_at: string
+          gig_id: string
+          id: string
+          notes: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          gig_id: string
+          id?: string
+          notes?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          gig_id?: string
+          id?: string
+          notes?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gig_availability_gig_id_fkey"
+            columns: ["gig_id"]
+            isOneToOne: false
+            referencedRelation: "gigs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gigs: {
+        Row: {
+          address: string | null
+          city: string
+          confirmed_amount: number | null
+          contract_url: string | null
+          created_at: string
+          created_by: string | null
+          date: string
+          end_time: string | null
+          id: string
+          notes: string | null
+          organizer_email: string | null
+          organizer_name: string | null
+          organizer_phone: string | null
+          quoted_amount: number | null
+          start_time: string | null
+          status: string
+          tds_percentage: number | null
+          title: string
+          updated_at: string
+          venue: string
+        }
+        Insert: {
+          address?: string | null
+          city: string
+          confirmed_amount?: number | null
+          contract_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          date: string
+          end_time?: string | null
+          id?: string
+          notes?: string | null
+          organizer_email?: string | null
+          organizer_name?: string | null
+          organizer_phone?: string | null
+          quoted_amount?: number | null
+          start_time?: string | null
+          status?: string
+          tds_percentage?: number | null
+          title: string
+          updated_at?: string
+          venue: string
+        }
+        Update: {
+          address?: string | null
+          city?: string
+          confirmed_amount?: number | null
+          contract_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          date?: string
+          end_time?: string | null
+          id?: string
+          notes?: string | null
+          organizer_email?: string | null
+          organizer_name?: string | null
+          organizer_phone?: string | null
+          quoted_amount?: number | null
+          start_time?: string | null
+          status?: string
+          tds_percentage?: number | null
+          title?: string
+          updated_at?: string
+          venue?: string
+        }
+        Relationships: []
+      }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string
+          gig_id: string
+          id: string
+          notes: string | null
+          payment_date: string
+          payment_mode: string | null
+          recorded_by: string | null
+          reference_number: string | null
+          tds_deducted: number | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          gig_id: string
+          id?: string
+          notes?: string | null
+          payment_date?: string
+          payment_mode?: string | null
+          recorded_by?: string | null
+          reference_number?: string | null
+          tds_deducted?: number | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          gig_id?: string
+          id?: string
+          notes?: string | null
+          payment_date?: string
+          payment_mode?: string | null
+          recorded_by?: string | null
+          reference_number?: string | null
+          tds_deducted?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_gig_id_fkey"
+            columns: ["gig_id"]
+            isOneToOne: false
+            referencedRelation: "gigs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payouts: {
+        Row: {
+          amount: number
+          created_at: string
+          gig_id: string
+          id: string
+          notes: string | null
+          paid_date: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          gig_id: string
+          id?: string
+          notes?: string | null
+          paid_date?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          gig_id?: string
+          id?: string
+          notes?: string | null
+          paid_date?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payouts_gig_id_fkey"
+            columns: ["gig_id"]
+            isOneToOne: false
+            referencedRelation: "gigs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -38,6 +283,110 @@ export type Database = {
           id?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      song_versions: {
+        Row: {
+          audio_url: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          notes: string | null
+          song_id: string
+          version_name: string
+        }
+        Insert: {
+          audio_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          song_id: string
+          version_name: string
+        }
+        Update: {
+          audio_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          song_id?: string
+          version_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "song_versions_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: false
+            referencedRelation: "songs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      songs: {
+        Row: {
+          arranger: string | null
+          audio_url: string | null
+          chords: string | null
+          composer: string | null
+          created_at: string
+          created_by: string | null
+          duration_minutes: number | null
+          id: string
+          is_original: boolean | null
+          key_signature: string | null
+          lyrics: string | null
+          performance_notes: string | null
+          raga: string | null
+          sheet_music_url: string | null
+          structure: string | null
+          tala: string | null
+          tempo: number | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          arranger?: string | null
+          audio_url?: string | null
+          chords?: string | null
+          composer?: string | null
+          created_at?: string
+          created_by?: string | null
+          duration_minutes?: number | null
+          id?: string
+          is_original?: boolean | null
+          key_signature?: string | null
+          lyrics?: string | null
+          performance_notes?: string | null
+          raga?: string | null
+          sheet_music_url?: string | null
+          structure?: string | null
+          tala?: string | null
+          tempo?: number | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          arranger?: string | null
+          audio_url?: string | null
+          chords?: string | null
+          composer?: string | null
+          created_at?: string
+          created_by?: string | null
+          duration_minutes?: number | null
+          id?: string
+          is_original?: boolean | null
+          key_signature?: string | null
+          lyrics?: string | null
+          performance_notes?: string | null
+          raga?: string | null
+          sheet_music_url?: string | null
+          structure?: string | null
+          tala?: string | null
+          tempo?: number | null
+          title?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -67,6 +416,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_gig_financials: {
+        Args: { gig_uuid: string }
+        Returns: {
+          balance_due: number
+          gross_amount: number
+          member_count: number
+          net_amount: number
+          per_member_share: number
+          total_expenses: number
+          total_payments: number
+          total_tds: number
+        }[]
+      }
+      generate_gig_payouts: { Args: { gig_uuid: string }; Returns: undefined }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
