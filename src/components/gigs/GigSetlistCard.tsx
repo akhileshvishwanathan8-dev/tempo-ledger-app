@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Music, Plus, Trash2, Clock, ChevronDown, ChevronUp, Copy } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Music, Plus, Trash2, Clock, GripVertical, Copy } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,6 +11,7 @@ import { useGigSetlist, useAddToSetlist, useRemoveFromSetlist, useUpdateSetlistO
 import { useSongs } from '@/hooks/useSongs';
 import { useGigs } from '@/hooks/useGigs';
 import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 interface GigSetlistCardProps {
   gigId: string;
@@ -21,6 +22,8 @@ export function GigSetlistCard({ gigId }: GigSetlistCardProps) {
   const [copyDialogOpen, setCopyDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [gigSearchQuery, setGigSearchQuery] = useState('');
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   const { data: setlist = [], isLoading } = useGigSetlist(gigId);
   const { data: allSongs = [], isLoading: songsLoading } = useSongs();
@@ -66,24 +69,45 @@ export function GigSetlistCard({ gigId }: GigSetlistCardProps) {
     setGigSearchQuery('');
   };
 
-  const handleMoveUp = async (index: number) => {
-    if (index === 0) return;
+  const handleDragStart = (index: number) => {
+    setDraggedIndex(index);
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggedIndex !== null && draggedIndex !== index) {
+      setDragOverIndex(index);
+    }
+  };
+
+  const handleDragLeave = () => {
+    setDragOverIndex(null);
+  };
+
+  const handleDrop = async (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === dropIndex) {
+      setDraggedIndex(null);
+      setDragOverIndex(null);
+      return;
+    }
+
     const newItems = [...setlist];
-    [newItems[index - 1], newItems[index]] = [newItems[index], newItems[index - 1]];
+    const [draggedItem] = newItems.splice(draggedIndex, 1);
+    newItems.splice(dropIndex, 0, draggedItem);
+
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+
     await updateOrder.mutateAsync({
       gigId,
       items: newItems.map((item, i) => ({ id: item.id, position: i })),
     });
   };
 
-  const handleMoveDown = async (index: number) => {
-    if (index === setlist.length - 1) return;
-    const newItems = [...setlist];
-    [newItems[index], newItems[index + 1]] = [newItems[index + 1], newItems[index]];
-    await updateOrder.mutateAsync({
-      gigId,
-      items: newItems.map((item, i) => ({ id: item.id, position: i })),
-    });
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+    setDragOverIndex(null);
   };
 
   return (
@@ -246,10 +270,14 @@ export function GigSetlistCard({ gigId }: GigSetlistCardProps) {
                   key={item.id}
                   item={item}
                   index={index}
-                  totalItems={setlist.length}
                   onRemove={() => handleRemoveSong(item.id)}
-                  onMoveUp={() => handleMoveUp(index)}
-                  onMoveDown={() => handleMoveDown(index)}
+                  isDragging={draggedIndex === index}
+                  isDragOver={dragOverIndex === index}
+                  onDragStart={() => handleDragStart(index)}
+                  onDragOver={(e) => handleDragOver(e, index)}
+                  onDragLeave={handleDragLeave}
+                  onDrop={(e) => handleDrop(e, index)}
+                  onDragEnd={handleDragEnd}
                   isReordering={updateOrder.isPending}
                 />
               ))}
@@ -272,35 +300,47 @@ export function GigSetlistCard({ gigId }: GigSetlistCardProps) {
 interface SetlistItemRowProps {
   item: SetlistItem;
   index: number;
-  totalItems: number;
   onRemove: () => void;
-  onMoveUp: () => void;
-  onMoveDown: () => void;
+  isDragging: boolean;
+  isDragOver: boolean;
+  onDragStart: () => void;
+  onDragOver: (e: React.DragEvent) => void;
+  onDragLeave: () => void;
+  onDrop: (e: React.DragEvent) => void;
+  onDragEnd: () => void;
   isReordering: boolean;
 }
 
-function SetlistItemRow({ item, index, totalItems, onRemove, onMoveUp, onMoveDown, isReordering }: SetlistItemRowProps) {
+function SetlistItemRow({ 
+  item, 
+  index, 
+  onRemove, 
+  isDragging, 
+  isDragOver,
+  onDragStart,
+  onDragOver,
+  onDragLeave,
+  onDrop,
+  onDragEnd,
+  isReordering 
+}: SetlistItemRowProps) {
   return (
-    <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/30 border border-border/30 group">
-      <div className="flex flex-col gap-0.5">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-5 w-5"
-          onClick={onMoveUp}
-          disabled={index === 0 || isReordering}
-        >
-          <ChevronUp className="w-3 h-3" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-5 w-5"
-          onClick={onMoveDown}
-          disabled={index === totalItems - 1 || isReordering}
-        >
-          <ChevronDown className="w-3 h-3" />
-        </Button>
+    <div 
+      draggable
+      onDragStart={onDragStart}
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      onDrop={onDrop}
+      onDragEnd={onDragEnd}
+      className={cn(
+        "flex items-center gap-2 p-3 rounded-lg bg-muted/30 border border-border/30 group transition-all cursor-grab active:cursor-grabbing",
+        isDragging && "opacity-50 scale-95",
+        isDragOver && "border-primary border-2 bg-primary/10",
+        isReordering && "pointer-events-none opacity-70"
+      )}
+    >
+      <div className="text-muted-foreground hover:text-foreground transition-colors">
+        <GripVertical className="w-4 h-4" />
       </div>
 
       <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-xs font-medium text-primary shrink-0">
