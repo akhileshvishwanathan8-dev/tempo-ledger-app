@@ -9,8 +9,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { LogOut, User, Shield, Music, Eye } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { LogOut, User, Shield, Music, Eye, Settings } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 
 const roleConfig = {
@@ -73,6 +73,14 @@ export function UserMenu() {
           <User className="mr-2 h-4 w-4" />
           Profile
         </DropdownMenuItem>
+        {role === 'admin' && (
+          <DropdownMenuItem asChild className="cursor-pointer focus:bg-muted">
+            <Link to="/admin">
+              <Settings className="mr-2 h-4 w-4" />
+              Admin Dashboard
+            </Link>
+          </DropdownMenuItem>
+        )}
         <DropdownMenuSeparator className="bg-border" />
         <DropdownMenuItem 
           className="cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive"
