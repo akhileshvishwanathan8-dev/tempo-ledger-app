@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Calendar, Plus, Loader2, Music } from 'lucide-react';
 import { format, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isSameDay, isToday } from 'date-fns';
 import { AppLayout } from '@/components/layout/AppLayout';
@@ -10,6 +11,7 @@ import { GigFilters } from '@/components/gigs/GigFilters';
 import { AddGigDialog } from '@/components/gigs/AddGigDialog';
 
 export default function Gigs() {
+  const navigate = useNavigate();
   const [statusFilter, setStatusFilter] = useState<GigStatus | 'all'>('all');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -129,8 +131,9 @@ export default function Gigs() {
         ) : gigs && gigs.length > 0 ? (
           <div className="space-y-3">
             {gigs.map((gig, index) => (
-              <GigCard key={gig.id} gig={gig} index={index} />
+              <GigCard key={gig.id} gig={gig} index={index} onClick={() => navigate(`/gigs/${gig.id}`)} />
             ))}
+          </div>
           </div>
         ) : (
           <div className="glass-card p-8 text-center">

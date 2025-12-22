@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import Index from "./pages/Index";
 import Gigs from "./pages/Gigs";
+import GigDetail from "./pages/GigDetail";
 import Finances from "./pages/Finances";
 import Songs from "./pages/Songs";
 import AI from "./pages/AI";
@@ -37,6 +38,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Gigs />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/gigs/:gigId"
+              element={
+                <ProtectedRoute>
+                  <GigDetail />
                 </ProtectedRoute>
               }
             />
