@@ -265,6 +265,54 @@ export function useCreatePayment() {
   });
 }
 
+export function useUpdatePayment() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, gigId, ...input }: Partial<GigPayment> & { id: string; gigId: string }) => {
+      const { data, error } = await supabase
+        .from('payments')
+        .update(input)
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      return { data, gigId };
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['gig-payments', result.gigId] });
+      queryClient.invalidateQueries({ queryKey: ['gig-financials'] });
+      toast.success('Payment updated');
+    },
+    onError: (error) => {
+      toast.error('Failed to update payment: ' + error.message);
+    },
+  });
+}
+
+export function useDeletePayment() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, gigId }: { id: string; gigId: string }) => {
+      const { error } = await supabase
+        .from('payments')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+      return { gigId };
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['gig-payments', result.gigId] });
+      queryClient.invalidateQueries({ queryKey: ['gig-financials'] });
+      toast.success('Payment deleted');
+    },
+    onError: (error) => {
+      toast.error('Failed to delete payment: ' + error.message);
+    },
+  });
+}
+
 export function useGigPayouts(gigId: string) {
   return useQuery({
     queryKey: ['gig-payouts', gigId],
