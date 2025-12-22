@@ -18,6 +18,8 @@ interface GigCardProps {
   onClick?: () => void;
 }
 
+export { statusConfig };
+
 export function GigCard({ gig, index, onClick }: GigCardProps) {
   const status = statusConfig[gig.status];
   const amount = gig.confirmed_amount || gig.quoted_amount;
