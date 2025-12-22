@@ -1,1 +1,4 @@
 project_id = "igklsppukivlfunrdhco"
+
+[functions.band-assistant]
+verify_jwt = false
