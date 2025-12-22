@@ -134,7 +134,6 @@ export default function Gigs() {
               <GigCard key={gig.id} gig={gig} index={index} onClick={() => navigate(`/gigs/${gig.id}`)} />
             ))}
           </div>
-          </div>
         ) : (
           <div className="glass-card p-8 text-center">
             <Music className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
