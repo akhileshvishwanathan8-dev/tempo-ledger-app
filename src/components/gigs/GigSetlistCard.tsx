@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Music, Plus, Trash2, GripVertical, Clock, ChevronDown, ChevronUp } from 'lucide-react';
+import { Music, Plus, Trash2, Clock, ChevronDown, ChevronUp, Copy } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -7,9 +7,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useGigSetlist, useAddToSetlist, useRemoveFromSetlist, useUpdateSetlistOrder, SetlistItem } from '@/hooks/useGigSetlist';
+import { useGigSetlist, useAddToSetlist, useRemoveFromSetlist, useUpdateSetlistOrder, useCopySetlist, SetlistItem } from '@/hooks/useGigSetlist';
 import { useSongs } from '@/hooks/useSongs';
-import { cn } from '@/lib/utils';
+import { useGigs } from '@/hooks/useGigs';
+import { format } from 'date-fns';
 
 interface GigSetlistCardProps {
   gigId: string;
@@ -17,13 +18,24 @@ interface GigSetlistCardProps {
 
 export function GigSetlistCard({ gigId }: GigSetlistCardProps) {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [copyDialogOpen, setCopyDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [gigSearchQuery, setGigSearchQuery] = useState('');
 
   const { data: setlist = [], isLoading } = useGigSetlist(gigId);
   const { data: allSongs = [], isLoading: songsLoading } = useSongs();
+  const { data: allGigs = [], isLoading: gigsLoading } = useGigs();
   const addToSetlist = useAddToSetlist();
   const removeFromSetlist = useRemoveFromSetlist();
   const updateOrder = useUpdateSetlistOrder();
+  const copySetlist = useCopySetlist();
+
+  // Filter gigs that have setlists (exclude current gig)
+  const availableGigs = allGigs.filter(gig => 
+    gig.id !== gigId &&
+    (gig.title.toLowerCase().includes(gigSearchQuery.toLowerCase()) ||
+     gig.venue.toLowerCase().includes(gigSearchQuery.toLowerCase()))
+  );
 
   // Filter songs not already in setlist
   const setlistSongIds = new Set(setlist.map(s => s.song_id));
@@ -46,6 +58,12 @@ export function GigSetlistCard({ gigId }: GigSetlistCardProps) {
 
   const handleRemoveSong = async (id: string) => {
     await removeFromSetlist.mutateAsync({ id, gigId });
+  };
+
+  const handleCopyFromGig = async (sourceGigId: string) => {
+    await copySetlist.mutateAsync({ sourceGigId, targetGigId: gigId });
+    setCopyDialogOpen(false);
+    setGigSearchQuery('');
   };
 
   const handleMoveUp = async (index: number) => {
@@ -81,13 +99,71 @@ export function GigSetlistCard({ gigId }: GigSetlistCardProps) {
               </Badge>
             )}
           </div>
-          <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm" variant="outline" className="gap-1">
-                <Plus className="w-4 h-4" />
-                Add Song
-              </Button>
-            </DialogTrigger>
+          <div className="flex items-center gap-2">
+            <Dialog open={copyDialogOpen} onOpenChange={setCopyDialogOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm" variant="ghost" className="gap-1">
+                  <Copy className="w-4 h-4" />
+                  Copy from Gig
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="bg-card border-border max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Copy Setlist from Another Gig</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <Input
+                    placeholder="Search gigs..."
+                    value={gigSearchQuery}
+                    onChange={(e) => setGigSearchQuery(e.target.value)}
+                  />
+                  <ScrollArea className="h-[300px]">
+                    {gigsLoading ? (
+                      <div className="space-y-2">
+                        {[1, 2, 3].map(i => (
+                          <Skeleton key={i} className="h-14 w-full" />
+                        ))}
+                      </div>
+                    ) : availableGigs.length === 0 ? (
+                      <div className="text-center py-8 text-muted-foreground">
+                        {gigSearchQuery ? 'No matching gigs found' : 'No other gigs available'}
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {availableGigs.map(gig => (
+                          <button
+                            key={gig.id}
+                            onClick={() => handleCopyFromGig(gig.id)}
+                            disabled={copySetlist.isPending}
+                            className="w-full p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors text-left flex items-center justify-between group"
+                          >
+                            <div>
+                              <p className="font-medium text-foreground">{gig.title}</p>
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+                                <span>{format(new Date(gig.date), 'MMM d, yyyy')}</span>
+                                <span>•</span>
+                                <span>{gig.venue}</span>
+                              </div>
+                            </div>
+                            <Copy className="w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </ScrollArea>
+                  <p className="text-xs text-muted-foreground">
+                    This will add songs from the selected gig to this setlist.
+                  </p>
+                </div>
+              </DialogContent>
+            </Dialog>
+            <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm" variant="outline" className="gap-1">
+                  <Plus className="w-4 h-4" />
+                  Add Song
+                </Button>
+              </DialogTrigger>
             <DialogContent className="bg-card border-border max-w-md">
               <DialogHeader>
                 <DialogTitle>Add Song to Setlist</DialogTitle>
@@ -144,7 +220,8 @@ export function GigSetlistCard({ gigId }: GigSetlistCardProps) {
                 </ScrollArea>
               </div>
             </DialogContent>
-          </Dialog>
+            </Dialog>
+          </div>
         </div>
       </CardHeader>
 
