@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Edit, Trash2 } from 'lucide-react';
+import { Edit, Trash2, Calendar, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { GigInfoCard } from '@/components/gigs/GigInfoCard';
@@ -18,12 +18,17 @@ import {
   useGigPayouts,
   useGigFinancials 
 } from '@/hooks/useGigDetails';
+import { useSyncGigToCalendar, useGoogleCalendarConnection } from '@/hooks/useGoogleCalendar';
+import { useAuth } from '@/contexts/AuthContext';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 export default function GigDetail() {
   const { gigId } = useParams<{ gigId: string }>();
   const navigate = useNavigate();
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const { role } = useAuth();
+  const isAppAdmin = role === 'app_admin';
   
   const { data: gigs, isLoading: gigsLoading } = useGigs();
   const { data: availability = [], isLoading: availabilityLoading } = useGigAvailability(gigId || '');
@@ -31,8 +36,10 @@ export default function GigDetail() {
   const { data: payments = [], isLoading: paymentsLoading } = useGigPayments(gigId || '');
   const { data: payouts = [], isLoading: payoutsLoading } = useGigPayouts(gigId || '');
   const { data: financials, isLoading: financialsLoading } = useGigFinancials(gigId || '');
+  const { data: calendarConnection } = useGoogleCalendarConnection();
   
   const deleteGig = useDeleteGig();
+  const syncToCalendar = useSyncGigToCalendar();
 
   const gig = gigs?.find(g => g.id === gigId);
 
@@ -72,6 +79,29 @@ export default function GigDetail() {
       title={gig.title}
       action={
         <div className="flex items-center gap-2">
+          {/* Sync to Calendar button - only for app_admins with connected calendar */}
+          {isAppAdmin && calendarConnection && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => syncToCalendar.mutate(gigId!)}
+                  disabled={syncToCalendar.isPending}
+                  className="text-green-500 hover:bg-green-500/20"
+                >
+                  {syncToCalendar.isPending ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <Calendar className="w-5 h-5" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Sync to Google Calendar</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
           <Button 
             variant="ghost" 
             size="icon" 
