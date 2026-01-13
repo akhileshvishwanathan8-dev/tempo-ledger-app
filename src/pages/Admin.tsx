@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Shield, Music, Eye, Users, Trash2, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
+import { GoogleCalendarCard } from '@/components/admin/GoogleCalendarCard';
 
 const roleConfig = {
   app_admin: { label: 'App Admin', icon: Shield, color: 'bg-primary/20 text-primary border-primary/30' },
@@ -34,7 +35,7 @@ const roleConfig = {
 };
 
 export default function Admin() {
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, role: currentUserRole } = useAuth();
   const { data: users, isLoading, error } = useUsers();
   const updateRole = useUpdateUserRole();
   const deleteUser = useDeleteUser();
@@ -88,7 +89,10 @@ export default function Admin() {
           </Card>
         </div>
 
-        {/* User Management Card */}
+        {/* Google Calendar Card - Only for App Admins */}
+        {currentUserRole === 'app_admin' && (
+          <GoogleCalendarCard />
+        )}
         <Card className="glass-card">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
