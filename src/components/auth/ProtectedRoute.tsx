@@ -1,13 +1,19 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
+import { PermissionState } from '@/components/ui/permission-state';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
   allowedRoles?: ('app_admin' | 'general_admin' | 'musician' | 'external_viewer')[];
+  showPermissionState?: boolean; // Show friendly UI instead of redirect
 }
 
-export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
+export function ProtectedRoute({ 
+  children, 
+  allowedRoles,
+  showPermissionState = true 
+}: ProtectedRouteProps) {
   const { user, role, loading } = useAuth();
 
   if (loading) {
@@ -26,16 +32,18 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
   }
 
   if (allowedRoles && role && !allowedRoles.includes(role)) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="glass-card p-8 text-center max-w-md">
-          <h2 className="text-xl font-semibold text-foreground mb-2">Access Denied</h2>
-          <p className="text-muted-foreground">
-            You don't have permission to access this page.
-          </p>
+    if (showPermissionState) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-background p-4">
+          <PermissionState 
+            type="restricted"
+            title="Admin Access Required"
+            description="This section is only available to administrators. Contact your band admin if you need access."
+          />
         </div>
-      </div>
-    );
+      );
+    }
+    return <Navigate to="/" replace />;
   }
 
   return <>{children}</>;

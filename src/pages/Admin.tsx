@@ -23,9 +23,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Shield, Music, Eye, Users, Trash2, Loader2 } from 'lucide-react';
+import { Shield, Music, Eye, Users, Trash2, Loader2, Upload, FileSpreadsheet } from 'lucide-react';
 import { format } from 'date-fns';
 import { GoogleCalendarCard } from '@/components/admin/GoogleCalendarCard';
+import { ExcelUploadDialog } from '@/components/admin/ExcelUploadDialog';
+import { supabase } from '@/integrations/supabase/client';
 
 const roleConfig = {
   app_admin: { label: 'App Admin', icon: Shield, color: 'bg-primary/20 text-primary border-primary/30' },
@@ -89,9 +91,36 @@ export default function Admin() {
           </Card>
         </div>
 
-        {/* Google Calendar Card - Only for App Admins */}
+        {/* Google Calendar & Excel Upload - Only for App Admins */}
         {currentUserRole === 'app_admin' && (
-          <GoogleCalendarCard />
+          <div className="space-y-4">
+            <GoogleCalendarCard />
+            <Card className="glass-card">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileSpreadsheet className="h-5 w-5 text-primary" />
+                  Data Import
+                </CardTitle>
+                <CardDescription>
+                  Import gigs, expenses, or payments from Excel files
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ExcelUploadDialog 
+                  onImport={async (data, type) => {
+                    // Handled in Finances page - this is a shortcut
+                    window.location.href = '/finances';
+                  }}
+                  trigger={
+                    <Button className="w-full gap-2">
+                      <Upload className="w-4 h-4" />
+                      Import Excel Data
+                    </Button>
+                  }
+                />
+              </CardContent>
+            </Card>
+          </div>
         )}
         <Card className="glass-card">
           <CardHeader>
