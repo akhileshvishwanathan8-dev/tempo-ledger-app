@@ -14,7 +14,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 
 const roleConfig = {
-  admin: { label: 'Admin', icon: Shield, color: 'text-primary' },
+  app_admin: { label: 'App Admin', icon: Shield, color: 'text-primary' },
+  general_admin: { label: 'General Admin', icon: Shield, color: 'text-primary' },
   musician: { label: 'Musician', icon: Music, color: 'text-secondary' },
   external_viewer: { label: 'Viewer', icon: Eye, color: 'text-muted-foreground' },
 };
@@ -73,7 +74,7 @@ export function UserMenu() {
           <User className="mr-2 h-4 w-4" />
           Profile
         </DropdownMenuItem>
-        {role === 'admin' && (
+        {(role === 'app_admin' || role === 'general_admin') && (
           <DropdownMenuItem asChild className="cursor-pointer focus:bg-muted">
             <Link to="/admin">
               <Settings className="mr-2 h-4 w-4" />

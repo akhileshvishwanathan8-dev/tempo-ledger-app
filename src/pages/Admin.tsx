@@ -27,7 +27,8 @@ import { Shield, Music, Eye, Users, Trash2, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 
 const roleConfig = {
-  admin: { label: 'Admin', icon: Shield, color: 'bg-primary/20 text-primary border-primary/30' },
+  app_admin: { label: 'App Admin', icon: Shield, color: 'bg-primary/20 text-primary border-primary/30' },
+  general_admin: { label: 'General Admin', icon: Shield, color: 'bg-primary/20 text-primary border-primary/30' },
   musician: { label: 'Musician', icon: Music, color: 'bg-secondary/20 text-secondary border-secondary/30' },
   external_viewer: { label: 'Viewer', icon: Eye, color: 'bg-muted text-muted-foreground border-border' },
 };
@@ -72,7 +73,7 @@ export default function Admin() {
           <Card className="glass-card">
             <CardContent className="p-4 text-center">
               <div className="text-2xl font-bold text-primary">
-                {users?.filter((u) => u.role === 'admin').length || 0}
+                {users?.filter((u) => u.role === 'app_admin' || u.role === 'general_admin').length || 0}
               </div>
               <div className="text-xs text-muted-foreground">Admins</div>
             </CardContent>
@@ -164,10 +165,16 @@ export default function Admin() {
                           </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="admin">
+                          <SelectItem value="app_admin">
                             <div className="flex items-center gap-2">
                               <Shield className="h-4 w-4 text-primary" />
-                              Admin
+                              App Admin
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="general_admin">
+                            <div className="flex items-center gap-2">
+                              <Shield className="h-4 w-4 text-primary" />
+                              General Admin
                             </div>
                           </SelectItem>
                           <SelectItem value="musician">
@@ -234,9 +241,18 @@ export default function Admin() {
             <div className="flex items-start gap-3 p-3 rounded-lg bg-primary/5 border border-primary/20">
               <Shield className="h-5 w-5 text-primary mt-0.5" />
               <div>
-                <div className="font-medium text-foreground">Admin</div>
+                <div className="font-medium text-foreground">App Admin</div>
                 <div className="text-sm text-muted-foreground">
-                  Full access to all features including user management, finances, and settings.
+                  Full access including user management, role changes, Google Calendar sync, and all settings.
+                </div>
+              </div>
+            </div>
+            <div className="flex items-start gap-3 p-3 rounded-lg bg-primary/5 border border-primary/20">
+              <Shield className="h-5 w-5 text-primary mt-0.5" />
+              <div>
+                <div className="font-medium text-foreground">General Admin</div>
+                <div className="text-sm text-muted-foreground">
+                  Can manage gigs, finances, and view admin dashboard. Cannot manage users or sync calendar.
                 </div>
               </div>
             </div>
