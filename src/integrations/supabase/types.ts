@@ -154,6 +154,7 @@ export type Database = {
           created_by: string | null
           date: string
           end_time: string | null
+          google_calendar_event_id: string | null
           id: string
           notes: string | null
           organizer_email: string | null
@@ -176,6 +177,7 @@ export type Database = {
           created_by?: string | null
           date: string
           end_time?: string | null
+          google_calendar_event_id?: string | null
           id?: string
           notes?: string | null
           organizer_email?: string | null
@@ -198,6 +200,7 @@ export type Database = {
           created_by?: string | null
           date?: string
           end_time?: string | null
+          google_calendar_event_id?: string | null
           id?: string
           notes?: string | null
           organizer_email?: string | null
@@ -210,6 +213,39 @@ export type Database = {
           title?: string
           updated_at?: string
           venue?: string
+        }
+        Relationships: []
+      }
+      google_calendar_connections: {
+        Row: {
+          access_token: string
+          calendar_id: string | null
+          created_at: string
+          created_by: string
+          id: string
+          refresh_token: string
+          token_expires_at: string
+          updated_at: string
+        }
+        Insert: {
+          access_token: string
+          calendar_id?: string | null
+          created_at?: string
+          created_by: string
+          id?: string
+          refresh_token: string
+          token_expires_at: string
+          updated_at?: string
+        }
+        Update: {
+          access_token?: string
+          calendar_id?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          refresh_token?: string
+          token_expires_at?: string
+          updated_at?: string
         }
         Relationships: []
       }
