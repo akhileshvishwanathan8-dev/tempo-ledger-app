@@ -46,6 +46,44 @@ export interface CreateGigInput {
   notes?: string;
 }
 
+// Helper function to sync gig to Google Calendar (fire-and-forget)
+async function syncGigToCalendar(gigId: string) {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+
+    // Check if calendar is connected
+    const { data: connection } = await supabase
+      .from('google_calendar_connections')
+      .select('id')
+      .limit(1)
+      .maybeSingle();
+
+    if (!connection) return; // No calendar connected, skip sync
+
+    const response = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/sync-gig-to-calendar`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ gig_id: gigId }),
+      }
+    );
+
+    if (response.ok) {
+      console.log('Gig synced to Google Calendar');
+    } else {
+      const data = await response.json();
+      console.warn('Calendar sync failed:', data.error);
+    }
+  } catch (error) {
+    console.warn('Calendar sync error:', error);
+  }
+}
+
 export function useGigs(statusFilter?: GigStatus | 'all', sortOrder: 'asc' | 'desc' = 'asc') {
   return useQuery({
     queryKey: ['gigs', statusFilter, sortOrder],
@@ -85,9 +123,11 @@ export function useCreateGig() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['gigs'] });
       toast.success('Gig created successfully');
+      // Auto-sync to Google Calendar
+      syncGigToCalendar(data.id);
     },
     onError: (error) => {
       toast.error('Failed to create gig: ' + error.message);
@@ -110,9 +150,11 @@ export function useUpdateGig() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['gigs'] });
       toast.success('Gig updated successfully');
+      // Auto-sync to Google Calendar
+      syncGigToCalendar(data.id);
     },
     onError: (error) => {
       toast.error('Failed to update gig: ' + error.message);
