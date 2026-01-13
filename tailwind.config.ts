@@ -60,16 +60,24 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
-        neon: {
-          purple: "hsl(var(--neon-purple))",
-          "purple-glow": "hsl(var(--neon-purple-glow))",
-          teal: "hsl(var(--neon-teal))",
-          "teal-glow": "hsl(var(--neon-teal-glow))",
-          blue: "hsl(var(--neon-blue))",
+        brand: {
+          red: "hsl(var(--brand-red))",
+          "red-glow": "hsl(var(--brand-red-glow))",
+          "red-deep": "hsl(var(--brand-red-deep))",
+          white: "hsl(var(--brand-white))",
+          black: "hsl(var(--brand-black))",
         },
         glass: {
           bg: "hsl(var(--glass-bg))",
           border: "hsl(var(--glass-border))",
+        },
+        status: {
+          success: "hsl(var(--success))",
+          "success-foreground": "hsl(var(--success-foreground))",
+          warning: "hsl(var(--warning))",
+          "warning-foreground": "hsl(var(--warning-foreground))",
+          info: "hsl(var(--info))",
+          "info-foreground": "hsl(var(--info-foreground))",
         },
       },
       borderRadius: {
@@ -80,8 +88,8 @@ export default {
         "3xl": "1.5rem",
       },
       boxShadow: {
-        "glow-purple": "var(--shadow-glow-purple)",
-        "glow-teal": "var(--shadow-glow-teal)",
+        "glow-red": "var(--shadow-glow-red)",
+        "glow-red-intense": "var(--shadow-glow-red-intense)",
         card: "var(--shadow-card)",
         elevated: "var(--shadow-elevated)",
       },
@@ -106,6 +114,10 @@ export default {
           "0%, 100%": { transform: "rotate(-1deg)" },
           "50%": { transform: "rotate(1deg)" },
         },
+        glow: {
+          "0%, 100%": { boxShadow: "0 0 20px hsl(var(--brand-red) / 0.3)" },
+          "50%": { boxShadow: "0 0 40px hsl(var(--brand-red) / 0.5)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -113,10 +125,12 @@ export default {
         shimmer: "shimmer 2s linear infinite",
         "pulse-ring": "pulse-ring 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite",
         wiggle: "wiggle 0.5s ease-in-out infinite",
+        glow: "glow 2s ease-in-out infinite",
       },
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
         "gradient-conic": "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
+        "gradient-red": "linear-gradient(135deg, hsl(var(--brand-red)) 0%, hsl(var(--brand-red-deep)) 100%)",
       },
     },
   },
